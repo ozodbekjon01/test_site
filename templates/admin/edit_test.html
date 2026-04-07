@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Testni tahrirlash</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.form-box {
+    background: #fff;
+    padding: 30px;
+    border-radius: 14px;
+    width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.input-group input,
+.input-group textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+textarea {
+    height: 80px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #dc2626;
+}
+
+.alert {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.success { background: #dcfce7; color: #166534; }
+.error { background: #fee2e2; color: #991b1b; }
+
+.back {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    text-decoration: none;
+    color: #ef4444;
+}
+</style>
+</head>
+<body>
+
+<div class="form-box">
+
+    <h2>Testni tahrirlash</h2>
+
+    <!-- Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+
+        <div class="input-group">
+            <label>Nomi</label>
+            <input type="text" name="title" value="{{ test.title }}" required>
+        </div>
+
+        <div class="input-group">
+            <label>Tavsif</label>
+            <textarea name="description" required>{{ test.description }}</textarea>
+        </div>
+
+        <div class="input-group">
+            <label>Davomiylik</label>
+            <input type="number" name="duration" value="{{ test.duration }}" required>
+        </div>
+
+        <div class="input-group">
+            <label>Sinf</label>
+            <input type="number" name="test_class" value="{{ test.test_class }}" required>
+        </div>
+
+        <div class="input-group">
+            <label>Boshlanish vaqti</label>
+            <input type="datetime-local" name="start_time" value="{{ test.start_time }}">
+        </div>
+
+        <div class="input-group">
+            <label>Tugash vaqti</label>
+            <input type="datetime-local" name="end_time" value="{{ test.end_time }}">
+        </div>
+
+        <button>Saqlash</button>
+
+    </form>
+
+    <a href="/admin" class="back">⬅️ Orqaga</a>
+
+</div>
+
+</body>
+</html>

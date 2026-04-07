@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Maktablar ro‘yxati</h2>
+<a href="/admin/add_school" class="button add">➕ Maktab qo‘shish</a>
+<table>
+    <tr><th>ID</th><th>Nomi</th><th>Amallar</th></tr>
+    {% for s in schools %}
+    <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.name }}</td>
+        <td>
+            <a href="/admin/edit_school/{{ s.id }}" class="button edit">✏️</a>
+            <a href="/admin/delete_school/{{ s.id }}" class="button delete"
+               onclick="return confirm('O‘chirmoqchimisiz?')">❌</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>

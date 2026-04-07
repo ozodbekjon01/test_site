@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h2>Testlar ro‘yxati</h2>
+
+<div class="card">
+    {% if tests %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nomi</th>
+                <th>Davomiylik</th>
+                <th>Sinf</th>
+                <th>Vaqti</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for test in tests %}
+            <tr>
+                <td>{{ test.id }}</td>
+                <td>{{ test.title }}</td>
+                <td>{{ test.duration }} min</td>
+                <td>{{ test.test_class }}</td>
+                <td>{{ test.start_time }} - {{ test.end_time }}</td>
+                <td>
+                    
+                {% if current_time < test.start_time_dt %}
+                    Test boshlanmagan
+
+                {% elif current_time >= test.start_time_dt and current_time <= test.end_time_dt %}
+
+                    {% if test.completed %}
+                        Test topshirilgan, natijani ko‘rish uchun test muddati tugashini kuting
+
+                    {% elif test.started %}
+                        <a href="/student/take_test/{{ test.result_id }}">🔸 Davom ettirish</a>
+
+                    {% else %}
+                        <a href="/student/start_test/{{ test.id }}">🔹 Boshlash</a>
+
+                    {% endif %}
+
+                {% elif current_time > test.end_time_dt %}
+
+                    {% if test.completed %}
+                        <a href="/student/view_result/{{ test.id }}">Natijani ko‘rish  </a>
+                    {% else %}
+                        Test tugadi
+                    {% endif %}
+
+                {% endif %}
+                <p></p>
+                <a href="/student/test_ranking/{{ test.id }}" >  🏆 Reyting</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Hozircha mavjud testlar yo‘q.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

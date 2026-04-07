@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ro'yxatdan o'tish</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    height: 100vh;
+    background: linear-gradient(135deg, #22c55e, #4f46e5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.register-container {
+    background: #fff;
+    padding: 35px;
+    border-radius: 16px;
+    width: 380px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.register-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    font-size: 14px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: #4f46e5;
+    outline: none;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.register-btn:hover {
+    background: #4338ca;
+}
+
+.extra {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.extra a {
+    color: #4f46e5;
+    text-decoration: none;
+}
+.alert {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.alert.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert.success {
+    background: #dcfce7;
+    color: #166534;
+}
+</style>
+
+</head>
+<body>
+
+<div class="register-container">
+    <h2>Ro'yxatdan o'tish</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+    <form method="POST" action="/register">
+        
+        <div class="input-group">
+            <label>To‘liq ism</label>
+            <input type="text" name="full_name" required>
+        </div>
+
+        <div class="input-group">
+            <label>Username</label>
+            <input type="text" name="username" required>
+        </div>
+
+        <div class="input-group">
+            <label>Parol</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <div class="input-group">
+            <label>Sinf</label>
+            <input type="number" name="class_number" min="1" max="11" required>
+        </div>
+
+        <div class="input-group">
+            <label>Maktab</label>
+            <select name="school_id" required>
+                {% for school in schools %}
+                    <option value="{{ school.id }}">{{ school.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Role ni yashirin qilib beramiz -->
+        <input type="hidden" name="role" value="student">
+
+        <button class="register-btn">Ro‘yxatdan o‘tish</button>
+    </form>
+
+    <div class="extra">
+        <a href="{{ url_for('auth.login') }}">Allaqachon akkauntingiz bormi?</a>
+    </div>
+</div>
+
+</body>
+</html>

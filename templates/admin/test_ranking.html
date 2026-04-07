@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ test.title }} — Reyting</title>
+
+<style>
+body { font-family: 'Segoe UI', sans-serif; background: #f3f4f6; margin: 0; }
+.container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+
+h1 { text-align: center; color: #4f46e5; margin-bottom: 30px; }
+
+table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
+th { background: #6366f1; color: white; }
+
+.rank { font-weight: bold; color: #3b82f6; }
+.duration { color: #6b7280; }
+
+a.button { display: inline-block; margin-top: 20px; padding: 8px 12px; background: #3b82f6; color: #fff; border-radius: 8px; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>{{ test.title }} — Top 10 Reyting</h1>
+
+    {% if rankings %}
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Foydalanuvchi</th>
+                <th>Ball</th>
+                <th>Vaqti</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rankings %}
+            <tr>
+                <td class="rank">{{ r.rank }}</td>
+                <td>{{ r.full_name }}</td>
+                <td>{{ r.score }}</td>
+                <td class="duration">{{ (r.duration_seconds // 60) }} min {{ (r.duration_seconds % 60) }} sec</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="text-align:center;">Bu testga hali natija yo‘q.</p>
+    {% endif %}
+
+    <a href="/admin" class="button">⬅️ Orqaga</a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Profil{% endblock %}
+
+{% block content %}
+<h2>{{ user['full_name'] }} — Profil</h2>
+
+<div style="margin-bottom: 30px; padding:20px; background:#f3f4f6; border-radius:12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <p><strong>Foydalanuvchi nomi:</strong> {{ user['username'] }}</p>
+    <p><strong>Email:</strong> {{ user['email'] }}</p>
+    <p><strong>Ro‘yxatdan o‘tgan sana:</strong> {{ user['created_at'] }}</p>
+</div>
+
+<h3>Test natijalari</h3>
+{% if test_results %}
+<table style="width:100%; border-collapse: collapse; margin-top:10px;">
+    <thead>
+        <tr style="background:#2563eb; color:white;">
+            <th style="padding:10px; border:1px solid #ddd;">#</th>
+            <th style="padding:10px; border:1px solid #ddd;">Test nomi</th>
+            <th style="padding:10px; border:1px solid #ddd;">Ball</th>
+            <th style="padding:10px; border:1px solid #ddd;">Status</th>
+            <th style="padding:10px; border:1px solid #ddd;">Boshlanish va tugash</th>
+            <th style="padding:10px; border:1px solid #ddd;">Amallar</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tr in test_results %}
+        <tr style="text-align:center; {% if loop.index0 % 2 == 0 %}background:#f9fafb;{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td>{{ tr['test_title'] }}</td>
+            <td>{{ tr['score'] }}/{{ tr['max_score'] }}</td>
+            <td>{% if tr['completed'] %}✅ Tugallangan{% else %}⌛ Jarayonda{% endif %}</td>
+            <td>{{ tr['start_time'] }} - {{ tr['end_time'] or "Hali tugamagan" }}</td>
+            <td>
+                {% if tr['completed'] %}
+                    <a href="{{ url_for('student.view_result', test_id=tr['test_id']) }}" style="color:#10b981; font-weight:bold;">Natijani ko‘rish</a>
+                {% else %}
+                    ⏳ Test davom etmoqda
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Hozircha hech qanday test topshirilmadi.</p>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Savol tahrirlash</title>
+</head>
+<body>
+
+<h2>Savolni tahrirlash</h2>
+
+<form method="POST">
+    <input type="text" name="title" value="{{ question.title }}" required>
+    <button>Saqlash</button>
+</form>
+
+<a href="/admin/questions/{{ question.test_id }}">Orqaga</a>
+
+</body>
+</html>

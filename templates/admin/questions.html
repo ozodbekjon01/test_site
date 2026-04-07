@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Savollar</title>
+
+<style>
+body { font-family: sans-serif; background: #f3f4f6; }
+.container { max-width: 900px; margin: auto; padding: 20px; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+
+th { background: #6366f1; color: white; }
+
+.button {
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+    text-decoration: none;
+}
+
+.edit { background: #22c55e; }
+.delete { background: #ef4444; }
+.add { background: #3b82f6; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>{{ test.title }} — Savollar</h2>
+<div style="display:flex; gap:10px; margin-bottom:15px;">
+    <!-- Savol qo‘shish -->
+    <a href="/admin/add_question/{{ test.id }}" class="button add">➕ Savol qo‘shish</a>
+
+    <!-- TXT fayl upload -->
+    <form action="/admin/upload_questions/{{ test.id }}" method="POST" enctype="multipart/form-data">
+        <label class="button add" style="cursor:pointer;">
+            📂 TXT yuklash
+            <input type="file" name="file" accept=".txt" hidden onchange="this.form.submit()">
+        </label>
+    </form>
+
+    <!-- Sample TXT yuklab olish -->
+    <a href="{{ url_for('admin.download_sample') }}" class="button add">📄 Sample TXT yuklab olish</a>
+
+    <!-- Testni TXT yuklab olish -->
+    <a href="{{ url_for('admin.download_test', test_id=test.id) }}" class="button add">⬇️ Testni TXT yuklab olish</a>
+</div>
+<br><br>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Savol</th>
+        <th>Amallar</th>
+    </tr>
+
+    {% for q in questions %}
+    <tr>
+        <td>{{ q.id }}</td>
+        <td>{{ q.title }}</td>
+        <td>
+            <a href="/admin/edit_question/{{ q.id }}" class="button edit">✏️</a>
+            <a href="/admin/delete_question/{{ q.id }}" class="button delete"
+               onclick="return confirm('O‘chirmoqchimisiz?')">❌</a>
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<br>
+<a href="/admin">⬅️ Orqaga</a>
+
+</div>
+
+</body>
+</html>

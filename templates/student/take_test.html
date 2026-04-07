@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+/* Bosh fon va konteyner */
+.test-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: linear-gradient(135deg, #7b2ff7, #f107a3, #ff512f);
+    border-radius: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Sarlavha */
+.test-container h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #FFD700;
+    text-shadow: 2px 2px 8px black;
+    margin-bottom: 30px;
+}
+
+/* Taymer */
+#timer {
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 20px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+}
+
+/* Taymer qizil puls */
+.pulse {
+    animation: pulse 1s infinite;
+    color: #ff4d4d;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Savol bloklari */
+.question-block {
+    background: rgba(0,0,0,0.4);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.3s, background 0.3s;
+}
+.question-block:hover {
+    transform: scale(1.03);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Radio label */
+.question-block label {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.question-block input[type="radio"] {
+    margin-right: 10px;
+}
+.question-block label:hover {
+    background: #FFD700;
+    color: black;
+}
+
+/* Submit tugma */
+#submitBtn {
+    background: #FFD700;
+    color: black;
+    font-weight: 700;
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: block;
+    margin: 20px auto 0;
+}
+#submitBtn:hover {
+    transform: scale(1.1);
+    background: #ffc107;
+}
+#submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+</style>
+
+<div class="test-container">
+    <h1>🔥 {{ test['title'] }} — Test 🔥</h1>
+
+    <!-- Taymer -->
+    <div style="text-align:center;">
+        <p>⏰ Qolgan vaqt: <span id="timer"></span></p>
+    </div>
+
+    <form id="testForm" method="post">
+        {% for q in questions %}
+        <div class="question-block">
+            <p><strong>{{ loop.index }}. {{ q.question['title'] }}</strong></p>
+            {% for a in q.answers %}
+            <label>
+                <input type="radio" name="question_{{ q.question['id'] }}" value="{{ a['id'] }}">
+                {{ a['title'] }}
+            </label>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" id="submitBtn">✅ Testni tugatish</button>
+    </form>
+</div>
+
+<script>
+let durationSeconds = {{ remaining_seconds }};
+let timerDisplay = document.getElementById("timer");
+let submitBtn = document.getElementById("submitBtn");
+let testForm = document.getElementById("testForm");
+
+let interval = setInterval(function() {
+    let minutes = Math.floor(durationSeconds / 60);
+    let seconds = durationSeconds % 60;
+    timerDisplay.textContent = `${minutes} min ${seconds} sek`;
+
+    if(durationSeconds <= 60 && durationSeconds > 0){
+        timerDisplay.classList.add("pulse");
+    }
+
+    if (durationSeconds <= 0) {
+        clearInterval(interval);
+        timerDisplay.textContent = "⏰ Vaqt tugadi!";
+        timerDisplay.classList.remove("pulse");
+        submitBtn.disabled = true;
+        testForm.querySelectorAll("input").forEach(i => i.disabled = true);
+    }
+
+    durationSeconds--;
+}, 1000);
+</script>
+{% endblock %}
