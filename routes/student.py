@@ -17,11 +17,36 @@ def login_required(f):
 
 @bp.route("/")
 def student_dashboard():
-    user_id = session.get("user_id")  # foydalanuvchi ID
+    user_id = session.get("user_id")
+
+    # Agar login qilmagan bo‘lsa
+    if not user_id:
+        return redirect(url_for("auth.login"))
 
     with sqlite3.connect("database.db") as conn:
         conn.row_factory = sqlite3.Row
-        tests = conn.execute("SELECT * FROM tests").fetchall()
+
+        # 1. Foydalanuvchini olish
+        user = conn.execute(
+            "SELECT * FROM users WHERE id=?",
+            (user_id,)
+        ).fetchone()
+
+        if not user:
+            return redirect(url_for("auth.login"))
+
+        user_class = str(user["class_number"])  # stringga o'tkazamiz
+
+        # 2. Faqat shu sinfga mos testlar (XAVFSIZ LIKE)
+        tests = conn.execute(
+            """
+            SELECT * FROM tests
+            WHERE ',' || test_class || ',' LIKE ?
+            """,
+            (f"%,{user_class},%",)
+        ).fetchall()
+
+        # 3. Natijalar
         results = conn.execute(
             """
             SELECT id, test_id, completed, start_time, end_time
@@ -33,13 +58,23 @@ def student_dashboard():
         ).fetchall()
 
     tests_list = []
+
     for test in tests:
         test_dict = dict(test)
 
-        # SQL dan olingan stringlarni datetime ga aylantirish
-        test_dict["start_time_dt"] = datetime.strptime(test_dict["start_time"], "%Y-%m-%dT%H:%M")
-        test_dict["end_time_dt"] = datetime.strptime(test_dict["end_time"], "%Y-%m-%dT%H:%M")
-        # O'quvchi natijasi
+        # datetime parse
+        try:
+            test_dict["start_time_dt"] = datetime.strptime(
+                test_dict["start_time"], "%Y-%m-%dT%H:%M"
+            )
+            test_dict["end_time_dt"] = datetime.strptime(
+                test_dict["end_time"], "%Y-%m-%dT%H:%M"
+            )
+        except:
+            test_dict["start_time_dt"] = None
+            test_dict["end_time_dt"] = None
+
+        # natijani topish
         res_completed = next(
             (r for r in results if r["test_id"] == test_dict["id"] and r["completed"] == 1),
             None
@@ -51,17 +86,25 @@ def student_dashboard():
         )
 
         res = res_completed if res_completed else res_started
-        test_dict["started"] = True if res and res["start_time"] else False
+
+        test_dict["started"] = bool(res and res["start_time"])
         test_dict["completed"] = bool(res["completed"]) if res else False
-        test_dict["result_id"] = res["id"] if res and "id" in res.keys() else None
+        test_dict["result_id"] = res["id"] if res else None
+
+        # datetime parse (result)
         def parse_dt(dt):
-            return datetime.fromisoformat(dt) if dt else None
+            try:
+                return datetime.fromisoformat(dt) if dt else None
+            except:
+                return None
 
         test_dict["result_start"] = parse_dt(res["start_time"]) if res else None
         test_dict["result_end"] = parse_dt(res["end_time"]) if res else None
+
         tests_list.append(test_dict)
 
     current_time = datetime.now()
+
     return render_template(
         "student/dashboard.html",
         tests=tests_list,
