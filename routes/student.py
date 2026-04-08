@@ -1,5 +1,7 @@
 from flask import *
+import json
 import sqlite3
+import random
 from datetime import datetime
 dt_str = "2026-04-09T01:00"
 dt_obj = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M")
@@ -172,111 +174,168 @@ def start_test(test_id):
 
 
 
-import random
-from datetime import datetime
+
+
+
+
+
 
 import random
 from datetime import datetime
+from flask import request, session, redirect, url_for, flash, render_template
 
 @bp.route('/take_test/<int:result_id>', methods=['GET', 'POST'])
 def take_test(result_id):
     if 'user_id' not in session:
-        flash("Avval tizimga kiring", "error")
         return redirect(url_for('auth.login'))
 
     conn = get_db()
     c = conn.cursor()
 
-    # Natijani tekshirish
+    # result
     c.execute("SELECT * FROM test_results WHERE id=?", (result_id,))
     result = c.fetchone()
-    if not result:
-        flash("Natija topilmadi", "error")
+
+    if not result or result['user_id'] != session['user_id']:
         return redirect(url_for('student.student_dashboard'))
 
-    user_id = session['user_id']
-    if result['user_id'] != user_id:
-        flash("Boshqa foydalanuvchi testi", "error")
-        return redirect(url_for('student.student_dashboard'))
-
-    # Testni olish
+    # test
     c.execute("SELECT * FROM tests WHERE id=?", (result['test_id'],))
     test = c.fetchone()
 
-    # Savollarni olish
-    c.execute("SELECT * FROM questions WHERE test_id=?", (test['id'],))
-    all_questions = list(c.fetchall())
+    # 🔥 1. SAVOLLAR BOR-YO‘QLIGINI TEKSHIRAMIZ
+    c.execute("SELECT COUNT(*) FROM user_answers WHERE result_id=?", (result_id,))
+    count = c.fetchone()[0]
 
-    # Savollarni aralashtirish va limit 30
-    if len(all_questions) > 30:
-        questions = random.sample(all_questions, 30)
-    else:
-        questions = all_questions
-    random.shuffle(questions)
+    # 🔥 2. AGAR YO‘Q BO‘LSA — YARATAMIZ (FAKAT 1 MARTA)
+    if count == 0:
+        c.execute("SELECT id FROM questions WHERE test_id=?", (test['id'],))
+        all_q = [q['id'] for q in c.fetchall()]
+
+        if len(all_q) > 30:
+            selected = random.sample(all_q, 30)
+        else:
+            selected = all_q
+
+        random.shuffle(selected)
+
+        for q_id in selected:
+            c.execute("""
+                INSERT INTO user_answers (result_id, question_id, answer_id)
+                VALUES (?, ?, NULL)
+            """, (result_id, q_id))
+
+        conn.commit()
+
+    # 🔥 3. ENDI FAQAT SHU SAVOLLARNI OLAMIZ
+    c.execute("""
+        SELECT question_id FROM user_answers
+        WHERE result_id=?
+    """, (result_id,))
+    question_ids = [row['question_id'] for row in c.fetchall()]
 
     questions_with_answers = []
-    for q in questions:
-        c.execute("SELECT * FROM answers WHERE question_id=?", (q['id'],))
+    for q_id in question_ids:
+        c.execute("SELECT * FROM questions WHERE id=?", (q_id,))
+        q = c.fetchone()
+
+        c.execute("SELECT * FROM answers WHERE question_id=?", (q_id,))
         answers = list(c.fetchall())
         random.shuffle(answers)
-        questions_with_answers.append({'question': q, 'answers': answers})
 
-    # Agar test hali boshlanmagan bo'lsa, start_time ni yozish
+        questions_with_answers.append({
+            'question': q,
+            'answers': answers
+        })
+
+    # ⏱ start time
     if not result['start_time']:
-        start_time = datetime.now()
-        c.execute("UPDATE test_results SET start_time=? WHERE id=?", (start_time, result_id))
+        c.execute("UPDATE test_results SET start_time=? WHERE id=?", (datetime.now(), result_id))
         conn.commit()
+        start_time = datetime.now()
     else:
         start_time = datetime.fromisoformat(result['start_time'])
 
-    # POST bo‘lsa javoblarni saqlash
-    if request.method == 'POST':
-        score = 0
-        max_score = 0
-
-        for q in questions_with_answers:
-            q_id = q['question']['id']
-            max_score += 1
-
-            selected_id = request.form.get(f'question_{q_id}')
-            if selected_id:
-                selected_id = int(selected_id)
-                c.execute("SELECT * FROM answers WHERE id=?", (selected_id,))
-                ans = c.fetchone()
-                is_correct = ans['is_correct'] if ans else 0
-                if is_correct:
-                    score += 1
-
-                c.execute("""
-                    INSERT INTO user_answers (result_id, question_id, answer_id)
-                    VALUES (?, ?, ?)
-                """, (result_id, q_id, selected_id))
-            else:
-                c.execute("""
-                    INSERT INTO user_answers (result_id, question_id, answer_id)
-                    VALUES (?, ?, NULL)
-                """, (result_id, q_id))
-
-        c.execute("""
-            UPDATE test_results
-            SET score=?, max_score=?, end_time=?, completed=1
-            WHERE id=?
-        """, (score, max_score, datetime.now(), result_id))
-        conn.commit()
-        flash(f"Test tugadi! Siz {score}/{max_score} ball to‘pladingiz.", "success")
-        return redirect(url_for('student.student_dashboard'))
-
-    # Qolgan vaqtni hisoblash
+    # ⏰ vaqt tekshirish
     now = datetime.now()
-    elapsed_seconds = (now - start_time).total_seconds()
-    remaining_seconds = max(test['duration'] * 60 - elapsed_seconds, 0)
+    elapsed = (now - start_time).total_seconds()
+    total = test['duration'] * 60
+
+    if elapsed >= total and not result['completed']:
+        return finish_test(c, conn, result_id)
+
+    # ✅ POST
+    if request.method == 'POST':
+        return submit_test(c, conn, result_id)
+
+    remaining = max(total - elapsed, 0)
 
     return render_template(
         'student/take_test.html',
         test=test,
         questions=questions_with_answers,
-        remaining_seconds=int(remaining_seconds)
+        remaining_seconds=int(remaining)
     )
+
+
+# 🔥 SUBMIT (UPDATE QILADI, INSERT EMAS!)
+def submit_test(c, conn, result_id):
+    c.execute("""
+        SELECT question_id FROM user_answers WHERE result_id=?
+    """, (result_id,))
+    q_ids = [row['question_id'] for row in c.fetchall()]
+
+    score = 0
+
+    for q_id in q_ids:
+        selected = request.form.get(f'question_{q_id}')
+
+        if selected:
+            selected = int(selected)
+
+            c.execute("SELECT is_correct FROM answers WHERE id=?", (selected,))
+            ans = c.fetchone()
+
+            if ans and ans['is_correct']:
+                score += 1
+
+            c.execute("""
+                UPDATE user_answers
+                SET answer_id=?
+                WHERE result_id=? AND question_id=?
+            """, (selected, result_id, q_id))
+
+    c.execute("""
+        UPDATE test_results
+        SET score=?, max_score=?, end_time=?, completed=1
+        WHERE id=?
+    """, (score, len(q_ids), datetime.now(), result_id))
+
+    conn.commit()
+    flash(f"Natija: {score}/{len(q_ids)}", "success")
+
+    return redirect(url_for('student.student_dashboard'))
+
+
+# ⏰ AUTO FINISH
+def finish_test(c, conn, result_id):
+    c.execute("""
+        SELECT COUNT(*) FROM user_answers WHERE result_id=?
+    """, (result_id,))
+    total = c.fetchone()[0]
+
+    c.execute("""
+        UPDATE test_results
+        SET max_score=?, end_time=?, completed=1
+        WHERE id=?
+    """, (total, datetime.now(), result_id))
+
+    conn.commit()
+    flash("Vaqt tugadi!", "error")
+    return redirect(url_for('student.student_dashboard'))
+
+
+
 
 @bp.route('/view_result/<int:test_id>')
 def view_result(test_id):
@@ -318,10 +377,10 @@ def view_result(test_id):
             correct_a.id as correct_answer_id,
             correct_a.title as correct_answer_text
 
-        FROM questions q
+        FROM user_answers ua
 
-        LEFT JOIN user_answers ua 
-            ON ua.question_id = q.id AND ua.result_id = ?
+        JOIN questions q 
+            ON q.id = ua.question_id
 
         LEFT JOIN answers a 
             ON a.id = ua.answer_id
@@ -329,8 +388,8 @@ def view_result(test_id):
         LEFT JOIN answers correct_a 
             ON correct_a.question_id = q.id AND correct_a.is_correct = 1
 
-        WHERE q.test_id=?
-    """, (result["id"], test_id))
+        WHERE ua.result_id=?
+    """, (result["id"],))
 
     questions = c.fetchall()
 

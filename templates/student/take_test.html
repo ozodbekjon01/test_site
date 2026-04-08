@@ -1,156 +1,200 @@
 {% extends "base.html" %}
 {% block content %}
+
 <style>
-/* Bosh fon va konteyner */
-.test-container {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 30px;
-    background: linear-gradient(135deg, #7b2ff7, #f107a3, #ff512f);
-    border-radius: 30px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-    color: white;
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* Sarlavha */
+/* Container */
+.test-container {
+    max-width: 950px;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 25px;
+    backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    color: white;
+}
+
+/* Title */
 .test-container h1 {
     text-align: center;
     font-size: 2.5rem;
     font-weight: 800;
-    color: #FFD700;
-    text-shadow: 2px 2px 8px black;
-    margin-bottom: 30px;
+    background: linear-gradient(90deg, #00f5ff, #ff00c8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* Taymer */
+/* Timer */
+.timer-box {
+    text-align: center;
+    margin: 20px 0;
+}
+
 #timer {
     font-size: 1.8rem;
-    font-weight: bold;
+    padding: 10px 25px;
+    border-radius: 50px;
     background: rgba(0,0,0,0.5);
-    padding: 10px 20px;
-    border-radius: 20px;
-    display: inline-block;
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
+    box-shadow: 0 0 15px #00f5ff;
 }
 
-/* Taymer qizil puls */
-.pulse {
-    animation: pulse 1s infinite;
-    color: #ff4d4d;
-}
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-/* Savol bloklari */
-.question-block {
-    background: rgba(0,0,0,0.4);
-    padding: 20px;
+/* Progress bar */
+.progress {
+    height: 10px;
     border-radius: 20px;
+    background: rgba(255,255,255,0.1);
     margin-bottom: 20px;
-    transition: transform 0.3s, background 0.3s;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #00f5ff, #ff00c8);
+    transition: width 0.3s;
+}
+
+/* Questions */
+.question-block {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    transition: 0.3s;
 }
 .question-block:hover {
-    transform: scale(1.03);
-    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(0,255,255,0.4);
 }
 
-/* Radio label */
+/* Answers */
 .question-block label {
-    display: flex;
-    align-items: center;
-    background: rgba(255,255,255,0.1);
+    display: block;
     padding: 10px;
+    margin-top: 8px;
     border-radius: 10px;
-    margin-bottom: 8px;
+    background: rgba(255,255,255,0.08);
     cursor: pointer;
-    transition: all 0.3s;
+    transition: 0.3s;
 }
-.question-block input[type="radio"] {
+
+.question-block label:hover {
+    background: #00f5ff;
+    color: black;
+}
+
+input[type="radio"] {
     margin-right: 10px;
 }
-.question-block label:hover {
-    background: #FFD700;
-    color: black;
+
+/* Selected */
+input[type="radio"]:checked + span {
+    font-weight: bold;
 }
 
-/* Submit tugma */
+/* Button */
 #submitBtn {
-    background: #FFD700;
-    color: black;
-    font-weight: 700;
-    font-size: 1.5rem;
-    padding: 15px 40px;
+    display: block;
+    margin: 30px auto 0;
+    padding: 15px 50px;
+    font-size: 1.4rem;
     border-radius: 50px;
     border: none;
+    background: linear-gradient(90deg, #00f5ff, #ff00c8);
+    color: white;
     cursor: pointer;
-    transition: all 0.3s;
-    display: block;
-    margin: 20px auto 0;
+    transition: 0.3s;
 }
+
 #submitBtn:hover {
     transform: scale(1.1);
-    background: #ffc107;
+    box-shadow: 0 0 25px #ff00c8;
 }
-#submitBtn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+
+/* Mobile */
+@media(max-width:768px){
+    .test-container {
+        margin: 10px;
+        padding: 20px;
+    }
 }
 </style>
 
 <div class="test-container">
-    <h1>🔥 {{ test['title'] }} — Test 🔥</h1>
 
-    <!-- Taymer -->
-    <div style="text-align:center;">
-        <p>⏰ Qolgan vaqt: <span id="timer"></span></p>
+    <h1>🔥 {{ test['title'] }} 🔥</h1>
+
+    <!-- TIMER -->
+    <div class="timer-box">
+        ⏰ <span id="timer"></span>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
     </div>
 
     <form id="testForm" method="post">
+
         {% for q in questions %}
         <div class="question-block">
-            <p><strong>{{ loop.index }}. {{ q.question['title'] }}</strong></p>
+            <p><b>{{ loop.index }}. {{ q.question['title'] }}</b></p>
+
             {% for a in q.answers %}
             <label>
-                <input type="radio" name="question_{{ q.question['id'] }}" value="{{ a['id'] }}">
-                {{ a['title'] }}
+                <input type="radio"
+                       name="question_{{ q.question['id'] }}"
+                       value="{{ a['id'] }}"
+                       onchange="updateProgress()">
+                <span>{{ a['title'] }}</span>
             </label>
             {% endfor %}
         </div>
         {% endfor %}
 
-        <button type="submit" id="submitBtn">✅ Testni tugatish</button>
+        <button type="submit" id="submitBtn">🚀 Testni tugatish</button>
+
     </form>
 </div>
 
 <script>
-let durationSeconds = {{ remaining_seconds }};
-let timerDisplay = document.getElementById("timer");
-let submitBtn = document.getElementById("submitBtn");
-let testForm = document.getElementById("testForm");
+let time = {{ remaining_seconds }};
+let timer = document.getElementById("timer");
+let form = document.getElementById("testForm");
+let progressBar = document.getElementById("progressBar");
 
-let interval = setInterval(function() {
-    let minutes = Math.floor(durationSeconds / 60);
-    let seconds = durationSeconds % 60;
-    timerDisplay.textContent = `${minutes} min ${seconds} sek`;
+let totalQuestions = {{ questions|length }};
 
-    if(durationSeconds <= 60 && durationSeconds > 0){
-        timerDisplay.classList.add("pulse");
+// TIMER
+let interval = setInterval(() => {
+    let m = Math.floor(time / 60);
+    let s = time % 60;
+
+    timer.textContent = m + " min " + s + " sek";
+
+    if(time <= 60){
+        timer.style.color = "red";
     }
 
-    if (durationSeconds <= 0) {
+    if(time <= 0){
         clearInterval(interval);
-        timerDisplay.textContent = "⏰ Vaqt tugadi!";
-        timerDisplay.classList.remove("pulse");
-        submitBtn.disabled = true;
-        testForm.querySelectorAll("input").forEach(i => i.disabled = true);
+        timer.textContent = "Vaqt tugadi!";
+        form.submit();
     }
 
-    durationSeconds--;
+    time--;
 }, 1000);
+
+// PROGRESS
+function updateProgress(){
+    let answered = document.querySelectorAll("input[type='radio']:checked").length;
+    let percent = (answered / totalQuestions) * 100;
+    progressBar.style.width = percent + "%";
+}
 </script>
+
 {% endblock %}
